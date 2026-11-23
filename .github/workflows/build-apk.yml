@@ -1,0 +1,41 @@
+name: Build APEX Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Extract project
+        run: unzip -q APEX_LIFE_OS_ANDROID_SOURCE.zip
+
+      - name: Generate Android files
+        working-directory: apex_mobile
+        run: |
+          rm -rf android
+          flutter create --platforms=android --org com.apex --project-name apex_life_os .
+
+      - name: Install dependencies
+        working-directory: apex_mobile
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: apex_mobile
+        run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: APEX-LIFE-OS-APK
+          path: apex_mobile/build/app/outputs/flutter-apk/app-release.apk
